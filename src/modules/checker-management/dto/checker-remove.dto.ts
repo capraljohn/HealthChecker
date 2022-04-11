@@ -6,5 +6,9 @@ export class CheckerRemoveDto {
 	email?: string;
 
 	@IsString()
+	@IsOptional()
+	sendTg?: string;
+
+	@IsString()
 	serviceId: string;
 }

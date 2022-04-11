@@ -6,6 +6,10 @@ export class CheckerCreateDto {
 	email?: string;
 
 	@IsString()
+	@IsOptional()
+	sendTg?: string;
+
+	@IsString()
 	name: string;
 
 	@IsString()

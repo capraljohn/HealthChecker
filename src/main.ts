@@ -1,7 +1,6 @@
 import { Container, ContainerModule, interfaces } from 'inversify';
 import { App } from './app';
 import { TYPES } from './types';
-// import { CommonRequestService } from './shared/requests/common-request.service';
 import { CheckerControllerInterface } from './modules/checker-management/types/checker-controller.interface';
 import { CheckerService } from './modules/checker-management/checker.service';
 import { CheckerController } from './modules/checker-management/checker.controller';
@@ -10,7 +9,9 @@ import { ConfigService } from './modules/config/config.service';
 import { TypeormConfigService } from './modules/config/typeorm-config.service';
 import { ExeptionInterface } from './shared/helpers/errors/exeption.interface';
 import { ExeptionFilter } from './shared/helpers/errors/exeption.filter';
-import { MailerService } from './modules/send-response-management/email/emailer.service';
+import { MailerService } from './modules/send-response-management/emailer/emailer.service';
+import { TelegramService } from './modules/send-response-management/telegram/telegram.service';
+import { CommonRequestService } from './shared/helpers/common-request/common-request.service';
 
 export interface BootstrapReturnInterface {
 	appContainer: Container;
@@ -22,10 +23,11 @@ export const appBindings = new ContainerModule((bind: interfaces.Bind) => {
 		.to(TypeormConfigService)
 		.inSingletonScope();
 	bind<CheckerControllerInterface>(TYPES.CheckerController).to(CheckerController);
-	// bind<CommonRequestService>(TYPES.CommonRequestService)
-	// 	.to(CommonRequestService)
-	// 	.inSingletonScope();
+	bind<CommonRequestService>(TYPES.CommonRequestService)
+		.to(CommonRequestService)
+		.inSingletonScope();
 	bind<ExeptionInterface>(TYPES.ExeptionFilter).to(ExeptionFilter);
+	bind<TelegramService>(TYPES.TelegramService).to(TelegramService);
 	bind<MailerService>(TYPES.MailerService).to(MailerService);
 	bind<CheckerService>(TYPES.CheckerService).to(CheckerService);
 	bind<ConfigServiceInterface>(TYPES.ConfigService).to(ConfigService).inSingletonScope();

@@ -8,7 +8,7 @@ import 'reflect-metadata';
 export class ExeptionFilter implements ExeptionInterface {
 	catch(err: Error | HTTPError, req: Request, res: Response, next: NextFunction): void {
 		if (err instanceof HTTPError) {
-			console.error(`[${err.context}] Error ${err.statusCode}: ${err.message}`);
+			console.error(`Error ${err.statusCode}: ${err.message}`);
 			res.status(err.statusCode).send({ err: err.message });
 		} else {
 			console.error(`${err.message}`);

@@ -59,7 +59,7 @@ export class CheckerController extends BaseController implements CheckerControll
 		res: Response,
 		next: NextFunction,
 	): Promise<void> {
-		const list = await this.checkerService.getCurrentServicesList(body.email, next);
+		const list = await this.checkerService.getCurrentServicesList(body, next);
 		this.sendMessage(res, 200, list);
 	}
 

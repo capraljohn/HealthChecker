@@ -8,25 +8,32 @@ import { connectionSource } from '../config/typeorm.constant';
 import { NextFunction } from 'express';
 import { HTTPError } from '../../shared/helpers/errors/exepton.service';
 import { TYPES } from '../../types';
-import { MailerService } from '../send-response-management/email/emailer.service';
+import { MailerService } from '../send-response-management/emailer/emailer.service';
 import { CheckerGetByIdDto } from './dto/checker-get.dto';
 import { CheckerRemoveDto } from './dto/checker-remove.dto';
+import { TelegramService } from '../send-response-management/telegram/telegram.service';
+import { CheckerGetListDto } from './dto/checker-get-list.dto';
 
 @injectable()
 export class CheckerService {
 	private checkerRepository: Repository<CheckerEntity>;
-	constructor(@inject(TYPES.MailerService) private mailerService: MailerService) {
+	constructor(
+		@inject(TYPES.MailerService) private mailerService: MailerService,
+		@inject(TYPES.TelegramService) private telegramService: TelegramService,
+	) {
 		this.checkerRepository = connectionSource.getRepository(CheckerEntity);
 	}
 
-	async getCurrentServicesList(email: string | undefined, next: NextFunction) {
+	async getCurrentServicesList(param: CheckerGetListDto, next: NextFunction) {
+		const { email, sendTg } = param;
+
 		const serviceList = await this.checkerRepository.find();
 
 		if (!serviceList) {
 			return next(new HTTPError(204, 'No data available'));
 		}
 
-		let message: string = ``;
+		let message = '';
 
 		const services: any[] = [];
 		serviceList.map((service) => {
@@ -36,22 +43,25 @@ export class CheckerService {
 				url: service.urlService,
 				status: service.status,
 			});
-			message = `
-			 Id: ${service.id},
-			 Service ${service.serviceName} ${service.status},
- 			 Url ${service.urlService}\n
-			`;
+			message +=
+				`Id: ${service.id}\n` +
+				`Service ${service.serviceName} ${service.status}\n` +
+				`Url ${service.urlService}\n\n`;
 		});
 
-		if (email !== undefined) {
-			return await this.mailerService.sendToEmail(email, 'list', message);
+		if (email) {
+			await this.mailerService.sendToEmail(email, 'updating', message);
+		}
+
+		if (sendTg) {
+			await this.telegramService.sendToChat(message, sendTg);
 		}
 
 		return services;
 	}
 
 	async getStatusServicesById(body: CheckerGetByIdDto, next: NextFunction) {
-		const { serviceId, email } = body;
+		const { serviceId, email, sendTg } = body;
 		const serviceStatus = await this.checkerRepository.findOne({
 			where: { id: serviceId },
 		});
@@ -60,18 +70,20 @@ export class CheckerService {
 			return next(new HTTPError(404, 'Such service not found'));
 		}
 
-		if (email !== undefined) {
-			await this.mailerService.sendToEmail(
-				email,
-				'list',
-				`
-			 Service ${serviceStatus.serviceName} ${serviceStatus.status},
- 			 Unavailable from ${serviceStatus.unavailableFrom} to ${serviceStatus.unavailableTo}
- 					`,
-			);
+		const payloadResponse =
+			`Service ${serviceStatus.serviceName} ${serviceStatus.status}\n` +
+			`Unavailable from ${serviceStatus.unavailableFrom} to ${serviceStatus.unavailableTo}`;
+
+		if (email) {
+			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+		}
+
+		if (sendTg) {
+			await this.telegramService.sendToChat(payloadResponse, sendTg);
 		}
 
 		return {
+			name: serviceStatus.serviceName,
 			status: serviceStatus.status,
 			unavailableFrom: serviceStatus.unavailableFrom,
 			unavailableTo: serviceStatus.unavailableTo,
@@ -79,7 +91,7 @@ export class CheckerService {
 	}
 
 	async createService(param: CheckerCreateDto, next: NextFunction) {
-		const { url, name, email } = param;
+		const { url, name, email, sendTg } = param;
 
 		const findService = await this.checkerRepository.find({
 			where: { urlService: url },
@@ -96,22 +108,21 @@ export class CheckerService {
 			urlService: url,
 		});
 
-		if (email !== undefined) {
-			return await this.mailerService.sendToEmail(
-				email,
-				'list',
-				`
-			Service create with name ${param.name}
-			Url ${param.url}
-			`,
-			);
+		const payloadResponse = `Service create with name ${param.name}\n` + `Url ${param.url}/n`;
+
+		if (email) {
+			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+		}
+
+		if (sendTg) {
+			await this.telegramService.sendToChat(payloadResponse, sendTg);
 		}
 
 		return param;
 	}
 
 	async updateService(param: CheckerUpdateDto, next: NextFunction) {
-		const { url, name, serviceId, email } = param;
+		const { url, name, serviceId, email, sendTg } = param;
 
 		const serviceExist = await this.checkerRepository.findOne({
 			where: {
@@ -123,33 +134,36 @@ export class CheckerService {
 			return next(new HTTPError(404, 'Service with such id not exist'));
 		}
 
-		await this.checkerRepository.update(serviceExist.id, {
-			urlService: url,
-			serviceName: name,
-		});
+		const updatingService = this.checkerRepository.create({});
 
-		const getUpdate = {
-			name: param.name,
-			url: param.url,
-		};
-
-		if (email !== undefined) {
-			return await this.mailerService.sendToEmail(
-				email,
-				'list',
-				`
-			Service update
-			Name ${param.name}
-			Url ${param.url}
-			`,
-			);
+		if (name) {
+			updatingService.serviceName = name;
 		}
 
-		return getUpdate;
+		if (url) {
+			updatingService.urlService = url;
+		}
+
+		await this.checkerRepository.update(serviceExist.id, updatingService);
+
+		const payloadResponse = `Service update\n` + `Name ${param.name}\n` + `Url ${param.url}`;
+
+		if (email) {
+			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+		}
+
+		if (sendTg) {
+			await this.telegramService.sendToChat(payloadResponse, sendTg);
+		}
+
+		return {
+			name: param?.name,
+			url: param?.url,
+		};
 	}
 
 	async removeService(param: CheckerRemoveDto, next: NextFunction) {
-		const { serviceId, email } = param;
+		const { serviceId, email, sendTg } = param;
 		const serviceExist = await this.checkerRepository.findOne({
 			where: {
 				id: serviceId,
@@ -162,12 +176,14 @@ export class CheckerService {
 
 		await this.checkerRepository.delete(serviceId);
 
-		if (email !== undefined) {
-			return await this.mailerService.sendToEmail(
-				email,
-				'list',
-				`Service with id: ${serviceId} removed`,
-			);
+		const payloadResponse = `Service with id: ${serviceId} removed`;
+
+		if (email) {
+			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+		}
+
+		if (sendTg) {
+			await this.telegramService.sendToChat(payloadResponse, sendTg);
 		}
 
 		return serviceId;

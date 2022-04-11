@@ -7,4 +7,8 @@ export class CheckerGetByIdDto {
 	@IsEmail()
 	@IsOptional()
 	email?: string;
+
+	@IsString()
+	@IsOptional()
+	sendTg?: string;
 }

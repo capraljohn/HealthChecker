@@ -6,11 +6,17 @@ export class CheckerUpdateDto {
 	email?: string;
 
 	@IsString()
+	@IsOptional()
+	sendTg?: string;
+
+	@IsString()
 	serviceId: string;
 
 	@IsString()
-	name: string;
+	@IsOptional()
+	name?: string;
 
 	@IsString()
-	url: string;
+	@IsOptional()
+	url?: string;
 }

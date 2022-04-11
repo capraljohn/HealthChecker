@@ -1,7 +1,11 @@
-import { IsEmail, IsOptional } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CheckerGetListDto {
 	@IsEmail()
 	@IsOptional()
 	email?: string;
+
+	@IsString()
+	@IsOptional()
+	sendTg?: string;
 }
