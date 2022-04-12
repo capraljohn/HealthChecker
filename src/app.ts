@@ -42,7 +42,7 @@ export class App {
 	customCrone() {
 		setInterval(async () => {
 			await this.commonRequestService.requestOnUrl();
-		}, 60 * 1000 * 5);
+		}, 5000);
 	}
 
 	public async init(): Promise<void> {

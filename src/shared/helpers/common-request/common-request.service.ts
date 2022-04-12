@@ -28,10 +28,6 @@ export class CommonRequestService {
 			.select()
 			.getMany();
 
-		if (!currentServices) {
-			return new HTTPError(404, 'some message');
-		}
-
 		for (const url of currentServices) {
 			try {
 				const { status } = await axios.get(url.urlService);
@@ -58,7 +54,7 @@ export class CommonRequestService {
 					});
 				}
 			} catch (err) {
-				console.log(err);
+				new HTTPError(400, 'Bad request');
 			}
 		}
 	}

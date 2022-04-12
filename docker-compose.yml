@@ -1,0 +1,16 @@
+version: '3.3'
+services:
+  postgres:
+    image: postgres:14.1-alpine
+    container_name: healthchecker
+    restart: always
+    environment:
+      POSTGRES_DB: 'healthchecker'
+      POSTGRES_USER: 'admin'
+      POSTGRES_PASSWORD: 'admin'
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+    volumes:
+      - ../2. Init Database:/docker-entrypoint-initdb.d
+      - .:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
