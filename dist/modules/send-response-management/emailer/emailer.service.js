@@ -54,4 +54,4 @@ MailerService = __decorate([
     __metadata("design:paramtypes", [config_service_1.ConfigService])
 ], MailerService);
 exports.MailerService = MailerService;
-//# sourceMappingURL=emailer.service.js.map
+//# sourceMappingURL=mailer.service.js.map

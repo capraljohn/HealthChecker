@@ -13,7 +13,7 @@ require("reflect-metadata");
 let ExeptionFilter = class ExeptionFilter {
     catch(err, req, res, next) {
         if (err instanceof exepton_service_1.HTTPError) {
-            console.error(`[${err.context}] Error ${err.statusCode}: ${err.message}`);
+            console.error(`Error ${err.statusCode}: ${err.message}`);
             res.status(err.statusCode).send({ err: err.message });
         }
         else {

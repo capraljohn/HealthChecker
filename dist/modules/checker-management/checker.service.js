@@ -28,8 +28,6 @@ const checker_entity_1 = require("./entity/checker.entity");
 const typeorm_constant_1 = require("../config/typeorm.constant");
 const exepton_service_1 = require("../../shared/helpers/errors/exepton.service");
 const types_1 = require("../../types");
-const emailer_service_1 = require("../send-response-management/emailer/emailer.service");
-const telegram_service_1 = require("../send-response-management/telegram/telegram.service");
 let CheckerService = class CheckerService {
     constructor(mailerService, telegramService) {
         this.mailerService = mailerService;
@@ -43,7 +41,7 @@ let CheckerService = class CheckerService {
             if (!serviceList) {
                 return next(new exepton_service_1.HTTPError(204, 'No data available'));
             }
-            let message = ``;
+            let message = '';
             const services = [];
             serviceList.map((service) => {
                 services.push({
@@ -52,20 +50,21 @@ let CheckerService = class CheckerService {
                     url: service.urlService,
                     status: service.status,
                 });
-                message =
+                message +=
                     `Id: ${service.id}\n` +
                         `Service ${service.serviceName} ${service.status}\n` +
-                        `Url ${service.urlService}\n`;
+                        `Url ${service.urlService}\n\n`;
             });
-            email !== undefined
-                ? yield this.mailerService.sendToEmail(email, 'list', message)
-                : sendTg
-                    ? yield this.telegramService.sendToChat(message, sendTg)
-                    : null;
+            if (email) {
+                yield this.mailerService.sendToEmail(email, 'updating', message);
+            }
+            if (sendTg) {
+                yield this.telegramService.sendToChat(message, sendTg);
+            }
             return services;
         });
     }
-    getStatusServicesById(body, next) {
+    getStatusServiceById(body, next) {
         return __awaiter(this, void 0, void 0, function* () {
             const { serviceId, email, sendTg } = body;
             const serviceStatus = yield this.checkerRepository.findOne({
@@ -76,12 +75,14 @@ let CheckerService = class CheckerService {
             }
             const payloadResponse = `Service ${serviceStatus.serviceName} ${serviceStatus.status}\n` +
                 `Unavailable from ${serviceStatus.unavailableFrom} to ${serviceStatus.unavailableTo}`;
-            email !== undefined
-                ? yield this.mailerService.sendToEmail(email, 'status', payloadResponse)
-                : sendTg
-                    ? yield this.telegramService.sendToChat(payloadResponse, sendTg)
-                    : null;
+            if (email) {
+                yield this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+            }
+            if (sendTg) {
+                yield this.telegramService.sendToChat(payloadResponse, sendTg);
+            }
             return {
+                name: serviceStatus.serviceName,
                 status: serviceStatus.status,
                 unavailableFrom: serviceStatus.unavailableFrom,
                 unavailableTo: serviceStatus.unavailableTo,
@@ -104,12 +105,13 @@ let CheckerService = class CheckerService {
                 urlService: url,
             });
             const payloadResponse = `Service create with name ${param.name}\n` + `Url ${param.url}/n`;
-            email !== undefined
-                ? yield this.mailerService.sendToEmail(email, 'created', payloadResponse)
-                : sendTg
-                    ? yield this.telegramService.sendToChat(payloadResponse, sendTg)
-                    : null;
-            return param;
+            if (email) {
+                yield this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+            }
+            if (sendTg) {
+                yield this.telegramService.sendToChat(payloadResponse, sendTg);
+            }
+            return { name: name, url: url };
         });
     }
     updateService(param, next) {
@@ -123,21 +125,25 @@ let CheckerService = class CheckerService {
             if (!serviceExist) {
                 return next(new exepton_service_1.HTTPError(404, 'Service with such id not exist'));
             }
-            yield this.checkerRepository.update(serviceExist.id, {
-                urlService: url,
-                serviceName: name,
-            });
-            const getUpdate = {
-                name: param.name,
-                url: param.url,
-            };
+            const updatingService = this.checkerRepository.create({});
+            if (name) {
+                updatingService.serviceName = name;
+            }
+            if (url) {
+                updatingService.urlService = url;
+            }
+            yield this.checkerRepository.update(serviceExist.id, updatingService);
             const payloadResponse = `Service update\n` + `Name ${param.name}\n` + `Url ${param.url}`;
-            email !== undefined
-                ? yield this.mailerService.sendToEmail(email, 'updating', payloadResponse)
-                : sendTg
-                    ? yield this.telegramService.sendToChat(payloadResponse)
-                    : null;
-            return getUpdate;
+            if (email) {
+                yield this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+            }
+            if (sendTg) {
+                yield this.telegramService.sendToChat(payloadResponse, sendTg);
+            }
+            return {
+                name: param === null || param === void 0 ? void 0 : param.name,
+                url: param === null || param === void 0 ? void 0 : param.url,
+            };
         });
     }
     removeService(param, next) {
@@ -153,11 +159,12 @@ let CheckerService = class CheckerService {
             }
             yield this.checkerRepository.delete(serviceId);
             const payloadResponse = `Service with id: ${serviceId} removed`;
-            email !== undefined
-                ? yield this.mailerService.sendToEmail(email, 'removed', payloadResponse)
-                : sendTg
-                    ? yield this.telegramService.sendToChat(payloadResponse, sendTg)
-                    : null;
+            if (email) {
+                yield this.mailerService.sendToEmail(email, 'updating', payloadResponse);
+            }
+            if (sendTg) {
+                yield this.telegramService.sendToChat(payloadResponse, sendTg);
+            }
             return serviceId;
         });
     }
@@ -166,8 +173,7 @@ CheckerService = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.MailerService)),
     __param(1, (0, inversify_1.inject)(types_1.TYPES.TelegramService)),
-    __metadata("design:paramtypes", [emailer_service_1.MailerService,
-        telegram_service_1.TelegramService])
+    __metadata("design:paramtypes", [Object, Object])
 ], CheckerService);
 exports.CheckerService = CheckerService;
 //# sourceMappingURL=checker.service.js.map

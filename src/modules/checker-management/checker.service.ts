@@ -8,18 +8,19 @@ import { connectionSource } from '../config/typeorm.constant';
 import { NextFunction } from 'express';
 import { HTTPError } from '../../shared/helpers/errors/exepton.service';
 import { TYPES } from '../../types';
-import { MailerService } from '../send-response-management/emailer/emailer.service';
 import { CheckerGetByIdDto } from './dto/checker-get.dto';
 import { CheckerRemoveDto } from './dto/checker-remove.dto';
-import { TelegramService } from '../send-response-management/telegram/telegram.service';
 import { CheckerGetListDto } from './dto/checker-get-list.dto';
+import { CheckerServiceInterface } from './types/checker-service.interface';
+import { MailerInterface } from '../send-response-management/mailer/mailer.interface';
+import { TelegramInterface } from '../send-response-management/telegram/telegram.interface';
 
 @injectable()
-export class CheckerService {
+export class CheckerService implements CheckerServiceInterface {
 	private checkerRepository: Repository<CheckerEntity>;
 	constructor(
-		@inject(TYPES.MailerService) private mailerService: MailerService,
-		@inject(TYPES.TelegramService) private telegramService: TelegramService,
+		@inject(TYPES.MailerService) private mailerService: MailerInterface,
+		@inject(TYPES.TelegramService) private telegramService: TelegramInterface,
 	) {
 		this.checkerRepository = connectionSource.getRepository(CheckerEntity);
 	}
@@ -60,7 +61,7 @@ export class CheckerService {
 		return services;
 	}
 
-	async getStatusServicesById(body: CheckerGetByIdDto, next: NextFunction) {
+	async getStatusServiceById(body: CheckerGetByIdDto, next: NextFunction) {
 		const { serviceId, email, sendTg } = body;
 		const serviceStatus = await this.checkerRepository.findOne({
 			where: { id: serviceId },
@@ -118,7 +119,7 @@ export class CheckerService {
 			await this.telegramService.sendToChat(payloadResponse, sendTg);
 		}
 
-		return param;
+		return { name: name, url: url };
 	}
 
 	async updateService(param: CheckerUpdateDto, next: NextFunction) {

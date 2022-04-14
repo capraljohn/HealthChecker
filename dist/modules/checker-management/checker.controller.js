@@ -26,14 +26,12 @@ const inversify_1 = require("inversify");
 require("reflect-metadata");
 const base_controller_1 = require("../../shared/base.controller");
 const types_1 = require("../../types");
-const checker_service_1 = require("./checker.service");
 const checker_get_dto_1 = require("./dto/checker-get.dto");
 const checker_create_dto_1 = require("./dto/checker-create.dto");
 const checker_update_dto_1 = require("./dto/checker-update.dto");
 const checker_remove_dto_1 = require("./dto/checker-remove.dto");
 const validate_middleware_1 = require("../../shared/validate.middleware");
 const checker_get_list_dto_1 = require("./dto/checker-get-list.dto");
-const config_service_1 = require("../config/config.service");
 let CheckerController = class CheckerController extends base_controller_1.BaseController {
     constructor(configService, checkerService) {
         super();
@@ -80,7 +78,7 @@ let CheckerController = class CheckerController extends base_controller_1.BaseCo
     }
     getStatusService({ body }, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const status = yield this.checkerService.getStatusServicesById(body, next);
+            const status = yield this.checkerService.getStatusServiceById(body, next);
             this.sendMessage(res, 200, status);
         });
     }
@@ -107,8 +105,7 @@ CheckerController = __decorate([
     (0, inversify_1.injectable)(),
     __param(0, (0, inversify_1.inject)(types_1.TYPES.ConfigService)),
     __param(1, (0, inversify_1.inject)(types_1.TYPES.CheckerService)),
-    __metadata("design:paramtypes", [config_service_1.ConfigService,
-        checker_service_1.CheckerService])
+    __metadata("design:paramtypes", [Object, Object])
 ], CheckerController);
 exports.CheckerController = CheckerController;
 //# sourceMappingURL=checker.controller.js.map

@@ -3,7 +3,6 @@ import 'reflect-metadata';
 import { NextFunction, Request, Response } from 'express';
 import { BaseController } from '../../shared/base.controller';
 import { TYPES } from '../../types';
-import { CheckerService } from './checker.service';
 import { CheckerGetByIdDto } from './dto/checker-get.dto';
 import { CheckerCreateDto } from './dto/checker-create.dto';
 import { CheckerUpdateDto } from './dto/checker-update.dto';
@@ -11,13 +10,14 @@ import { CheckerRemoveDto } from './dto/checker-remove.dto';
 import { CheckerControllerInterface } from './types/checker-controller.interface';
 import { ValidateMiddleware } from '../../shared/validate.middleware';
 import { CheckerGetListDto } from './dto/checker-get-list.dto';
-import { ConfigService } from '../config/config.service';
+import { ConfigServiceInterface } from '../config/config.service.interface';
+import { CheckerServiceInterface } from './types/checker-service.interface';
 
 @injectable()
 export class CheckerController extends BaseController implements CheckerControllerInterface {
 	constructor(
-		@inject(TYPES.ConfigService) private configService: ConfigService,
-		@inject(TYPES.CheckerService) public checkerService: CheckerService,
+		@inject(TYPES.ConfigService) private configService: ConfigServiceInterface,
+		@inject(TYPES.CheckerService) public checkerService: CheckerServiceInterface,
 	) {
 		super();
 		this.bindRoutes([
@@ -68,7 +68,7 @@ export class CheckerController extends BaseController implements CheckerControll
 		res: Response,
 		next: NextFunction,
 	): Promise<void> {
-		const status = await this.checkerService.getStatusServicesById(body, next);
+		const status = await this.checkerService.getStatusServiceById(body, next);
 		this.sendMessage(res, 200, status);
 	}
 

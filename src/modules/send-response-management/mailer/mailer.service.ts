@@ -3,10 +3,10 @@ import 'reflect-metadata';
 import { TYPES } from '../../../types';
 import { ConfigService } from '../../config/config.service';
 import { createTransport } from 'nodemailer';
-import { EmailerInterface } from './emailer.interface';
+import { MailerInterface } from './mailer.interface';
 
 @injectable()
-export class MailerService implements EmailerInterface {
+export class MailerService implements MailerInterface {
 	constructor(@inject(TYPES.ConfigService) private configService: ConfigService) {}
 
 	public async sendToEmail(consumer: string, type: string, body: string) {

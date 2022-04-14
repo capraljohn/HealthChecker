@@ -55,7 +55,6 @@ let App = class App {
     customCrone() {
         setInterval(() => __awaiter(this, void 0, void 0, function* () {
             yield this.commonRequestService.requestOnUrl();
-            console.log('done');
         }), 5000);
     }
     init() {

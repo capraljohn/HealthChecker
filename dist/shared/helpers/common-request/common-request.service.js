@@ -48,9 +48,6 @@ let CommonRequestService = class CommonRequestService {
                 .createQueryBuilder('hc')
                 .select()
                 .getMany();
-            if (!currentServices) {
-                return new exepton_service_1.HTTPError(404, 'some message');
-            }
             for (const url of currentServices) {
                 try {
                     const { status } = yield axios_1.default.get(url.urlService);
@@ -61,7 +58,7 @@ let CommonRequestService = class CommonRequestService {
                             status: checker_entity_enum_1.CheckerEntityEnum.UNAVAILABLE,
                         });
                     }
-                    else if (url.unavailableTo !== null && status === (404 | 500 | 422)) {
+                    if (url.unavailableTo !== null && status === (404 | 500 | 422)) {
                         yield this.checkerRepository.update(url.id, {
                             status: checker_entity_enum_1.CheckerEntityEnum.UNAVAILABLE,
                         });
@@ -74,7 +71,7 @@ let CommonRequestService = class CommonRequestService {
                     }
                 }
                 catch (err) {
-                    console.log(err);
+                    new exepton_service_1.HTTPError(400, 'Bad request');
                 }
             }
         });
