@@ -12,22 +12,16 @@ import { CheckerGetByIdDto } from './dto/checker-get.dto';
 import { CheckerRemoveDto } from './dto/checker-remove.dto';
 import { CheckerGetListDto } from './dto/checker-get-list.dto';
 import { CheckerServiceInterface } from './types/checker-service.interface';
-import { MailerInterface } from '../send-response-management/mailer/mailer.interface';
-import { TelegramInterface } from '../send-response-management/telegram/telegram.interface';
+import { CommonSenderService } from '../send-response-management/common-sender.service';
 
 @injectable()
 export class CheckerService implements CheckerServiceInterface {
 	private checkerRepository: Repository<CheckerEntity>;
-	constructor(
-		@inject(TYPES.MailerService) private mailerService: MailerInterface,
-		@inject(TYPES.TelegramService) private telegramService: TelegramInterface,
-	) {
+	constructor(@inject(TYPES.CommonSenderService) private commonSenderService: CommonSenderService) {
 		this.checkerRepository = connectionSource.getRepository(CheckerEntity);
 	}
 
 	async getCurrentServicesList(param: CheckerGetListDto, next: NextFunction) {
-		const { email, sendTg } = param;
-
 		const serviceList = await this.checkerRepository.find();
 
 		if (!serviceList) {
@@ -50,19 +44,13 @@ export class CheckerService implements CheckerServiceInterface {
 				`Url ${service.urlService}\n\n`;
 		});
 
-		if (email) {
-			await this.mailerService.sendToEmail(email, 'updating', message);
-		}
-
-		if (sendTg) {
-			await this.telegramService.sendToChat(message, sendTg);
-		}
+		await this.commonSenderService.sendToPlatform(message, 'status', param);
 
 		return services;
 	}
 
-	async getStatusServiceById(body: CheckerGetByIdDto, next: NextFunction) {
-		const { serviceId, email, sendTg } = body;
+	async getStatusServiceById(param: CheckerGetByIdDto, next: NextFunction) {
+		const { serviceId } = param;
 		const serviceStatus = await this.checkerRepository.findOne({
 			where: { id: serviceId },
 		});
@@ -75,13 +63,7 @@ export class CheckerService implements CheckerServiceInterface {
 			`Service ${serviceStatus.serviceName} ${serviceStatus.status}\n` +
 			`Unavailable from ${serviceStatus.unavailableFrom} to ${serviceStatus.unavailableTo}`;
 
-		if (email) {
-			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
-		}
-
-		if (sendTg) {
-			await this.telegramService.sendToChat(payloadResponse, sendTg);
-		}
+		await this.commonSenderService.sendToPlatform(payloadResponse, 'status', param);
 
 		return {
 			name: serviceStatus.serviceName,
@@ -92,16 +74,14 @@ export class CheckerService implements CheckerServiceInterface {
 	}
 
 	async createService(param: CheckerCreateDto, next: NextFunction) {
-		const { url, name, email, sendTg } = param;
+		const { url, name } = param;
 
-		const findService = await this.checkerRepository.find({
+		const findService = await this.checkerRepository.findOne({
 			where: { urlService: url },
 		});
 
-		for (const service of findService) {
-			if (service.urlService === url) {
-				return next(new HTTPError(400, 'Such service has been created'));
-			}
+		if (findService) {
+			return next(new HTTPError(400, 'Such service has been created'));
 		}
 
 		await this.checkerRepository.save({
@@ -111,19 +91,13 @@ export class CheckerService implements CheckerServiceInterface {
 
 		const payloadResponse = `Service create with name ${param.name}\n` + `Url ${param.url}/n`;
 
-		if (email) {
-			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
-		}
-
-		if (sendTg) {
-			await this.telegramService.sendToChat(payloadResponse, sendTg);
-		}
+		await this.commonSenderService.sendToPlatform(payloadResponse, 'created', param);
 
 		return { name: name, url: url };
 	}
 
 	async updateService(param: CheckerUpdateDto, next: NextFunction) {
-		const { url, name, serviceId, email, sendTg } = param;
+		const { url, name, serviceId } = param;
 
 		const serviceExist = await this.checkerRepository.findOne({
 			where: {
@@ -149,13 +123,7 @@ export class CheckerService implements CheckerServiceInterface {
 
 		const payloadResponse = `Service update\n` + `Name ${param.name}\n` + `Url ${param.url}`;
 
-		if (email) {
-			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
-		}
-
-		if (sendTg) {
-			await this.telegramService.sendToChat(payloadResponse, sendTg);
-		}
+		await this.commonSenderService.sendToPlatform(payloadResponse, 'updated', param);
 
 		return {
 			name: param?.name,
@@ -164,7 +132,7 @@ export class CheckerService implements CheckerServiceInterface {
 	}
 
 	async removeService(param: CheckerRemoveDto, next: NextFunction) {
-		const { serviceId, email, sendTg } = param;
+		const { serviceId } = param;
 		const serviceExist = await this.checkerRepository.findOne({
 			where: {
 				id: serviceId,
@@ -179,13 +147,7 @@ export class CheckerService implements CheckerServiceInterface {
 
 		const payloadResponse = `Service with id: ${serviceId} removed`;
 
-		if (email) {
-			await this.mailerService.sendToEmail(email, 'updating', payloadResponse);
-		}
-
-		if (sendTg) {
-			await this.telegramService.sendToChat(payloadResponse, sendTg);
-		}
+		await this.commonSenderService.sendToPlatform(payloadResponse, 'deleted', param);
 
 		return serviceId;
 	}

@@ -8,4 +8,5 @@ export const TYPES = {
 	ExeptionFilter: Symbol.for('ExeptionFilter'),
 	MailerService: Symbol.for('MailerService'),
 	TelegramService: Symbol.for('TelegramService'),
+	CommonSenderService: Symbol.for('CommonSenderService'),
 };

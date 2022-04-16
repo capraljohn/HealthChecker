@@ -15,6 +15,7 @@ import { CommonRequestService } from './shared/helpers/common-request/common-req
 import { TelegramInterface } from './modules/send-response-management/telegram/telegram.interface';
 import { MailerInterface } from './modules/send-response-management/mailer/mailer.interface';
 import { CheckerServiceInterface } from './modules/checker-management/types/checker-service.interface';
+import { CommonSenderService } from './modules/send-response-management/common-sender.service';
 
 export interface BootstrapReturnInterface {
 	appContainer: Container;
@@ -33,6 +34,7 @@ export const appModule = new ContainerModule((bind: interfaces.Bind) => {
 	bind<ExeptionInterface>(TYPES.ExeptionFilter).to(ExeptionFilter);
 	bind<TelegramInterface>(TYPES.TelegramService).to(TelegramService);
 	bind<MailerInterface>(TYPES.MailerService).to(MailerService);
+	bind<CommonSenderService>(TYPES.CommonSenderService).to(CommonSenderService).inSingletonScope();
 	bind<ConfigServiceInterface>(TYPES.ConfigService).to(ConfigService).inSingletonScope();
 	bind<App>(TYPES.Application).to(App);
 });
